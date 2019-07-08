@@ -23,7 +23,6 @@ import java.util.Optional;
 
 import static com.backbase.assignment.kalahgame.util.GameUtils.convertToRawGame;
 
-
 @Component
 @Slf4j
 public class GameControlHandler {
@@ -48,9 +47,12 @@ public class GameControlHandler {
      * @return A new game status
      */
     public GameStatus handleMovement(long gameId, int pitId) {
+        log.info("Game id: " + gameId + ", move stones from pit " + pitId);
         Game game = gameRepository.findGameById(gameId);
         if ( null != game ) {
             GameStatus currentGameStatus = getCurrentGameStatus(game);
+            log.info("Current game status: " + currentGameStatus.toString());
+
             int middle = getMiddleIndex(currentGameStatus);
             int last = getLastIndex(currentGameStatus);
             if (!isGameOver(currentGameStatus, middle, last)) {
@@ -86,8 +88,8 @@ public class GameControlHandler {
      * @return A modified internal status
      */
     private RawGame sowStonesCounterClockwise(RawGame rawGame, int pitId) {
+        log.info("Sowing stones in pits, starting from pitId: " + pitId);
         CircularLinkedList<Pit> originalPitList = rawGame.getCircularLinkedList();
-
         int playerInTurn = getPlayerTurn(rawGame.getGameId());
         Optional<Node<Pit>> pitNode = Optional.ofNullable(getPitById(originalPitList, pitId, playerInTurn));
         pitNode.ifPresent(n -> {
@@ -101,6 +103,7 @@ public class GameControlHandler {
                     n = nextNode;
                     stones--;
                 } else {
+                    //Skipe opponent's Kalah
                     n = nextNode;
                 }
             }
@@ -112,6 +115,12 @@ public class GameControlHandler {
         return rawGame;
     }
 
+    /**
+     * Add stones to specified Kalah
+     * @param rawGame Internal representation of the game
+     * @param stonesToAdd Number of stones to add
+     * @param playerInTurn Playaer id
+     */
     private void addStonesToKalah(RawGame rawGame, int stonesToAdd, int playerInTurn){
        Node<Pit> kalah = findPlayerKalah(rawGame,playerInTurn);
        int currentStones = kalah.getItem().getStones();
@@ -119,6 +128,12 @@ public class GameControlHandler {
     }
 
 
+    /**
+     * Find kalah by player if
+     * @param rawGame Game representation
+     * @param playerInTurn Current player turn
+     * @return Node containing Kalah for the indicated player
+     */
     private Node<Pit> findPlayerKalah(RawGame rawGame,  int playerInTurn){
         Node<Pit> root = rawGame.getCircularLinkedList().getRoot();
         Node<Pit> current = root;
@@ -134,23 +149,33 @@ public class GameControlHandler {
     }
 
 
+    /**
+     * Check if landing pit from same player has one stone, after finish sowing
+     * @param currentNode Current node when sowing finished
+     * @return Number of Stones
+     */
     private int getStonesFromPitIfWasEmtpty(Node<Pit>  currentNode){
         int stones = 0;
         if ( currentNode.getItem().getStones() == 1 && !isKalah(currentNode) ) {
             int pitId = currentNode.getItem().getPitId();
+            currentNode.getItem().setStones(0);
             int movements = getMovementsFromPit(pitId);
             while (  movements > 0) {
                 currentNode = currentNode.getNextNode();
                 movements--;
             }
-            stones = currentNode.getItem().getStones();
+            stones = currentNode.getItem().getStones() + 1;
             currentNode.getItem().setStones(0);
         }
         return stones;
     }
 
 
-
+    /**
+     * How many movements from Pit to mirror pit (opposite player)
+     * @param pitId Pit id
+     * @return Number of movement to get to opponent's pit
+     */
     private int getMovementsFromPit(int pitId){
         int totalPits = gameConfiguration.getNumberOfPits() *2 + 2;
         int middle = gameConfiguration.getNumberOfPits() + 1;
@@ -161,6 +186,11 @@ public class GameControlHandler {
         }
     }
 
+    /** Is the node a Kalah?
+     *
+     * @param currentNode Node to analyze
+     * @return true if it is a Kalah
+     */
     private boolean isKalah(Node<Pit>  currentNode){
         return currentNode.getItem().getType().equals(PitType.KALAH);
     }
@@ -174,6 +204,7 @@ public class GameControlHandler {
      * @param node Current Pit
      */
     private void savePlayerTurn(long gameId, int playerInTurn, Node<Pit> node){
+        log.info("Saving player turn : " + playerInTurn);
         int playerInNode = node.getItem().getPlayer();
         int newTurn = ( playerInTurn != playerInNode )? playerInTurn:playerInNode;
         PlayerTurn turn = PlayerTurn.builder()
@@ -213,6 +244,7 @@ public class GameControlHandler {
         }
         while (current != root);
 
+        //This has no side effects, status remains the same
         return null;
     }
 

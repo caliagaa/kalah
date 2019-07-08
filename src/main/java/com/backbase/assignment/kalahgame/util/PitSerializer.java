@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Custom JSON serializer to transform Map to CircularLinkedList
+ */
 public class PitSerializer extends JsonSerializer<RawGame> {
 
     private static final String GAME_ID_FIELD = "gameId";

@@ -5,6 +5,10 @@ import org.springframework.data.annotation.Transient;
 
 import java.io.Serializable;
 
+/**
+ * Circular linked list to represent Kalah's board to facilitate calculation
+ * @param <T>
+ */
 @Getter
 public class CircularLinkedList<T> implements Serializable {
 

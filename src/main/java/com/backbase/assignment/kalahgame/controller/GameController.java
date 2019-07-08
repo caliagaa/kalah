@@ -27,4 +27,9 @@ public class GameController {
     public GameStatus move(@PathVariable long gameId, @PathVariable int pitId){
         return gameService.move(gameId,pitId);
     }
+
+    @GetMapping(value = "/healthCheck", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> healthCheck() {
+        return new ResponseEntity<>(null, HttpStatus.OK);
+    }
 }

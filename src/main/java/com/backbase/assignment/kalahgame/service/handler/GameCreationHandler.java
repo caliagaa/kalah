@@ -94,6 +94,7 @@ public class GameCreationHandler {
      * @return a new Game instance
      */
     private Game saveNewGame(long gameId) {
+        log.info("Saving new game with id: " + gameId);
         Game game = Game.builder()
                 .id(gameId)
                 .uri(URI + gameId)
@@ -109,6 +110,7 @@ public class GameCreationHandler {
      * @param gameId Game Id
      */
     private void createNewBoard(long gameId){
+        log.info("Setting kalah's board");
         int pits = gameConfiguration.getNumberOfPits();
         int stones = gameConfiguration.getNumberOfStones();
 
@@ -122,10 +124,13 @@ public class GameCreationHandler {
      * @param gameId Game Id
      */
     private void assignTurn(long gameId){
+        log.info("Assign random turn for player one or player two");
         PlayerTurn turn = PlayerTurn.builder()
                 .gameId(gameId)
                 .player(getRandomPlayer())
                 .timestamp(new Date()).build();
+
+        log.info("Player " + turn.getPlayer()+ "starts");
         playerTurnRepository.save(turn);
     }
 
