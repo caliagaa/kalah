@@ -26,5 +26,4 @@ public class Pit {
         this.player = player;
     }
 
-
 }

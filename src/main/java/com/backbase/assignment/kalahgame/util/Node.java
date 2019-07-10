@@ -1,6 +1,7 @@
 package com.backbase.assignment.kalahgame.util;
 
 
+import com.backbase.assignment.kalahgame.domain.Pit;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,24 +9,17 @@ import java.io.Serializable;
 
 /**
  * Container for Pits nodes
- *
- * @param <T>
  */
-public class Node<T>  implements Serializable {
 
-    static int noOfLinkedList = 0;
+@Getter
+public class Node implements Serializable {
 
-    @Getter
-    private T item;
+    private Pit pit;
 
-    @Getter
     @Setter
-    private Node<T> nextNode;
+    private Node nextNode;
 
-    Node(T item){
-
-        this.item = item;
-        noOfLinkedList++;
-
+    public Node(Pit pit) {
+        this.pit = pit;
     }
 }

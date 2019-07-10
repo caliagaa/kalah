@@ -19,4 +19,14 @@ public class GameConfiguration {
 
     @Value("${game.numberOfStones}")
     private int numberOfStones;
+
+    @Value("${game.gameSequenceName}")
+    private String gameSequenceName;
+
+    @Value("${server.port}")
+    private String serverPort;
+
+    @Value("${server.uri}")
+    private String serverUri;
+
 }

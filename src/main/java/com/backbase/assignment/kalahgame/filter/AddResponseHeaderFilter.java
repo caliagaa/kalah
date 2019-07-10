@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- *  Add CORS headers in response object
+ * Add CORS headers in response object
  */
 @WebFilter("/*")
 public class AddResponseHeaderFilter implements Filter {

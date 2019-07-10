@@ -2,14 +2,16 @@ package com.backbase.assignment.kalahgame.service.handler;
 
 import com.backbase.assignment.kalahgame.configuration.GameConfiguration;
 import com.backbase.assignment.kalahgame.domain.Game;
+import com.backbase.assignment.kalahgame.domain.GameInternalStatus;
+import com.backbase.assignment.kalahgame.domain.GameStatus;
 import com.backbase.assignment.kalahgame.domain.Pit;
+import com.backbase.assignment.kalahgame.domain.PitType;
 import com.backbase.assignment.kalahgame.domain.PlayerTurn;
-import com.backbase.assignment.kalahgame.domain.RawGame;
 import com.backbase.assignment.kalahgame.repository.GameRepository;
 import com.backbase.assignment.kalahgame.repository.GameStatusRepository;
 import com.backbase.assignment.kalahgame.repository.PlayerTurnRepository;
 import com.backbase.assignment.kalahgame.repository.SequenceRepository;
-import com.backbase.assignment.kalahgame.util.CircularLinkedList;
+import com.backbase.assignment.kalahgame.util.PitCircularLinkedList;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -20,7 +22,8 @@ import java.util.Date;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-import static com.backbase.assignment.kalahgame.util.GameUtils.*;
+import static com.backbase.assignment.kalahgame.util.PlayerEnum.PLAYER_ONE;
+import static com.backbase.assignment.kalahgame.util.PlayerEnum.PLAYER_TWO;
 
 @Component
 @Slf4j
@@ -42,95 +45,101 @@ public class GameCreationHandler {
     private PlayerTurnRepository playerTurnRepository;
 
     /**
-     * Initialize game: obtain current id  and save it
+     * Initialize game: obtain :
+     * - New sequence number for game
+     * - Persist new game with new sequence
+     * - Create new board with the acmount of stones and empty kalah's
+     * - Choose witch player starts
+     *
      * @return a new instance of the game
      */
     public Game initializeGame() {
-        long gameId = getGameId();
-        Game game = saveNewGame(gameId);
+        Game game = createNewGame();
 
-        assignTurn(gameId);
+        createNewBoard(game.getId());
+
+        assignTurnToPlayer(game.getId());
 
         return game;
     }
 
     /**
      * Get new id from sequence
+     *
      * @return a new Id for a game
      */
-    private long getGameId(){
-        return  sequenceRepository.getNextSequenceId(GAME_SEQUENCE_ID);
+    private long getGameId() {
+        return sequenceRepository.getNextSequenceId(gameConfiguration.getGameSequenceName());
     }
 
     /**
      * Helper method to initialize pits and its stones
      *
-     * @param numberOfPits Number of Pits in the game
-     * @param numberOfStones Number of stones in each pit
      * @param gameId Id of the current gmae
      * @return internal representation of the game and its pits
      */
-    private RawGame setupPits(int numberOfPits, int numberOfStones, long gameId) {
-        CircularLinkedList<Pit> gameBoard = new CircularLinkedList<>();
-        int totalPits = numberOfPits * 2 + 2;
-        IntStream.rangeClosed(1, totalPits).forEach(i -> {
+    private GameInternalStatus setupPits(long gameId) {
+        PitCircularLinkedList gameBoard = new PitCircularLinkedList();
+
+        int pits = gameConfiguration.getNumberOfPits();
+        int stones = gameConfiguration.getNumberOfStones();
+        int boardSize = pits * 2 + 2;
+
+        IntStream.rangeClosed(1, boardSize).forEach(i -> {
             Pit pit = Pit.builder()
                     .pitId(i)
-                    .stones(getStones(i, totalPits, numberOfStones))
-                    .type(getTypeByPitId(i, totalPits))
-                    .player(getPlayer(i, totalPits)).build();
+                    .stones(i == boardSize || i == boardSize / 2 ? 0 : stones)
+                    .type(i == boardSize || i == boardSize / 2 ? PitType.KALAH : PitType.PIT)
+                    .player(i < boardSize / 2 + 1 ? PLAYER_ONE.getType() : PLAYER_TWO.getType())
+                    .build();
             gameBoard.addNodes(pit);
         });
-        return RawGame.builder()
+        return GameInternalStatus.allBuilder()
                 .gameId(gameId)
                 .circularLinkedList(gameBoard)
                 .build();
-
     }
 
     /**
      * Create a new game
-     * @param gameId New Id of the game
+     *
      * @return a new Game instance
      */
-    private Game saveNewGame(long gameId) {
+    private Game createNewGame() {
+        long gameId = getGameId();
         log.info("Saving new game with id: " + gameId);
-        Game game = Game.builder()
+        return gameRepository.save(Game.builder()
                 .id(gameId)
-                .uri(URI + gameId)
-                .build();
-        gameRepository.save(game);
-
-        createNewBoard(gameId);
-        return game;
+                .uri(gameConfiguration.getServerUri() + gameId)
+                .build());
     }
 
     /**
      * When game starts create a new status
+     *
      * @param gameId Game Id
      */
-    private void createNewBoard(long gameId){
+    private void createNewBoard(long gameId) {
         log.info("Setting kalah's board");
-        int pits = gameConfiguration.getNumberOfPits();
-        int stones = gameConfiguration.getNumberOfStones();
-
-        RawGame gameRaw = setupPits(pits, stones, gameId);
-        gameStatusRepository.save(convertToGameStatus(gameRaw));
+        gameStatusRepository.save(GameStatus.builder()
+                .gameInternalStatus(setupPits(gameId))
+                .build());
     }
 
 
     /**
      * When game starts choose player's turn
+     *
      * @param gameId Game Id
      */
-    private void assignTurn(long gameId){
+    private void assignTurnToPlayer(long gameId) {
         log.info("Assign random turn for player one or player two");
         PlayerTurn turn = PlayerTurn.builder()
                 .gameId(gameId)
                 .player(getRandomPlayer())
                 .timestamp(new Date()).build();
 
-        log.info("Player " + turn.getPlayer()+ "starts");
+        log.info("Player " + turn.getPlayer() + "starts");
         playerTurnRepository.save(turn);
     }
 
@@ -140,14 +149,14 @@ public class GameCreationHandler {
      *
      * @return Player id
      */
-    private int getRandomPlayer(){
+    private int getRandomPlayer() {
         try {
             Random random = SecureRandom.getInstanceStrong();
-            return random.nextBoolean()? PLAYER_ONE: PLAYER_TWO;
+            return random.nextBoolean() ? PLAYER_ONE.getType() : PLAYER_TWO.getType();
         } catch (NoSuchAlgorithmException e) {
-            log.error(e.getMessage(),e);
+            log.error(e.getMessage(), e);
         }
-        return PLAYER_ONE;
+        return PLAYER_ONE.getType();
     }
 
 }

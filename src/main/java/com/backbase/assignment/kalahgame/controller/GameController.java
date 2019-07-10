@@ -9,27 +9,24 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController()
+@RequestMapping("/games")
 public class GameController {
 
     @Autowired
     private GameService gameService;
 
-    @GetMapping(value = "/games", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Game> createGame() {
         Game game = gameService.initializeGame();
         return new ResponseEntity<>(game, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/games/{gameId}/pits/{pitId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public GameStatus move(@PathVariable long gameId, @PathVariable int pitId){
-        return gameService.move(gameId,pitId);
-    }
-
-    @GetMapping(value = "/healthCheck", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> healthCheck() {
-        return new ResponseEntity<>(null, HttpStatus.OK);
+    @GetMapping(value = "/{gameId}/pits/{pitId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<GameStatus> move(@PathVariable long gameId, @PathVariable int pitId) {
+        return new ResponseEntity<>(gameService.move(gameId, pitId), HttpStatus.OK);
     }
 }
