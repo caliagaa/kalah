@@ -19,3 +19,14 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
     depends_on:
       - mongo
+
+  kalah:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    image: kalah:1.0
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongo
+    
