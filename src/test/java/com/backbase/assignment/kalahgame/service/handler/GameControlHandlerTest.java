@@ -72,17 +72,17 @@ public class GameControlHandlerTest {
     public void handleMovement_playerOneGameOver() {
         when(gameStatusRepository.findTop1ByGameIdOrderByTimestampDesc(game.getId())).thenReturn(getGamePlayerOneOverStatus());
         GameStatus newStatus = gameControlHandler.handleMovement(game.getId(), 1);
-        //assertTrue("Game should be over", game.isOver());
+        assertTrue("Game should be over", newStatus.isOver());
     }
 
     @Test
     public void handleMovement_playerTwoGameOver() {
         when(gameStatusRepository.findTop1ByGameIdOrderByTimestampDesc(game.getId())).thenReturn(getGamePlayerOneOverStatus());
         GameStatus newStatus = gameControlHandler.handleMovement(game.getId(), 1);
-        //assertTrue("Game should be over", game.isOver());
+        assertTrue("Game should be over", newStatus.isOver());
     }
 
-/*
+
     @Test
     public void handleMovement_stealStones() {
         int pitId = 8;
@@ -103,7 +103,6 @@ public class GameControlHandlerTest {
 
     }
 
- */
 
     @Test
     public void handleMovement_invalidPit() {
