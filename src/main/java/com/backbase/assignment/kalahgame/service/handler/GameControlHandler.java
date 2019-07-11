@@ -196,10 +196,10 @@ public class GameControlHandler {
      * @param gameId Game Id
      * @param node   Current Pit
      */
-    private void savePlayerTurn(long gameId, int playerInTurn, Node node) {
-        log.info("Saving player turn : " + playerInTurn);
-        int playerInNode = node.getPit().getPlayer();
-        int newTurn = playerInTurn;
+    private void savePlayerTurn(long gameId, int recentPlayer, Node node) {
+        int playerInLandingPit = node.getPit().getPlayer();
+        int newTurn = (recentPlayer != playerInLandingPit) ? playerInLandingPit : recentPlayer;
+        log.info("Saving player turn : " + newTurn);
         PlayerTurn turn = PlayerTurn.builder()
                 .gameId(gameId)
                 .player(newTurn)

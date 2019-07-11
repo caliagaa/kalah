@@ -23,6 +23,7 @@ public class GameStatus {
     @Field(value = "status")
     private Map<Integer, Integer> status;
 
+    @JsonIgnore
     private Date timestamp;
 
     @JsonIgnore

@@ -8,6 +8,10 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - mongo-network
+    volumes:
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js
 
   mongo-express:
     image: mongo-express
@@ -19,6 +23,8 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: example
     depends_on:
       - mongo
+    networks:
+      - mongo-network
 
   kalah:
     build:
@@ -29,4 +35,10 @@ services:
       - 8080:8080
     depends_on:
       - mongo
+    networks:
+      - mongo-network
+
+networks:
+  mongo-network:
+    driver: bridge
     
